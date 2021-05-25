@@ -1,0 +1,6 @@
+{
+    "env": {
+        "MONGO_ATLAS_PW": "leslie_node_hk",
+        "JWT_KEY": "@jWt_KeY1"
+    }
+}

@@ -1,32 +1,56 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser')
-const cors = require('cors')
-const postRoute = require('./routes/posts');
-const userRoute = require('./routes/user');
-const favRoute = require('./routes/favourite');
+const morgan = require("morgan");
+const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
-//Middleware
-app.use(cors());
+const productRoutes = require("./routes/products");
+const orderRoutes = require("./routes/orders");
+const userRoutes = require('./routes/user');
+
+mongoose.connect(
+  "mongodb+srv://node_api:"+
+  process.env.MONGO_ATLAS_PW +"@cluster0.8shwb.mongodb.net/APIDev?retryWrites=true&w=majority",
+  { useUnifiedTopology: true, useNewUrlParser: true},
+);
+mongoose.Promise = global.Promise;
+
+app.use(morgan("dev"));
+app.use('/uploads', express.static('uploads'));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use('/posts', postRoute);
-app.use('/user', userRoute);
-app.use('/favs', favRoute);
 
-
-//Routing
-app.get('/', (req, res) => {
-    res.send('API Running');
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Methods", "PUT, POST, PATCH, DELETE, GET");
+    return res.status(200).json({});
+  }
+  next();
 });
 
+// Routes which should handle requests
+app.use("/products", productRoutes);
+app.use("/orders", orderRoutes);
+app.use("/user", userRoutes);
 
-//DB Connection
-mongoose.connect('mongodb+srv://node_api:leslie_node_hk@cluster0.8shwb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', 
-{ useUnifiedTopology: true },
-{useNewUrlParser: true},
-() => console.log('Connected to DB')
-);
+app.use((req, res, next) => {
+  const error = new Error("Not found");
+  error.status = 404;
+  next(error);
+});
 
-//Listen
-app.listen(3000);
+app.use((error, req, res, next) => {
+  res.status(error.status || 500);
+  res.json({
+    error: {
+      message: error.message
+    }
+  });
+});
+
+module.exports = app;
