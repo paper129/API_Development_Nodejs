@@ -42,7 +42,7 @@ exports.products_create_product = (req, res, next) => {
     _id: new mongoose.Types.ObjectId(),
     name: req.body.name,
     price: req.body.price,
-    productImage: req.file.path
+    productImage: req.body.productImage
   });
   product
     .save()
@@ -98,17 +98,19 @@ exports.products_get_product = (req, res, next) => {
 
 exports.products_update_product = (req, res, next) => {
   const id = req.params.productId;
-  const updateOps = {};
-  for (const ops of req.body) {
-    updateOps[ops.propName] = ops.value;
-  }
-  Product.update({ _id: id }, { $set: updateOps })
+  const input = req.body;
+  console.log(input);
+  
+  for(const key of Object.keys(input)){
+    console.log(key, input[key]);
+    Product.update({ _id: id }, { key: input[key] })
     .exec()
     .then(result => {
+      console.log(result)
       res.status(200).json({
         message: "Product updated",
         request: {
-          type: "GET",
+          type: "PUT",
           url: "http://localhost:3000/products/" + id
         }
       });
@@ -119,11 +121,13 @@ exports.products_update_product = (req, res, next) => {
         error: err
       });
     });
+  }
+  
 };
 
 exports.products_delete = (req, res, next) => {
   const id = req.params.productId;
-  Product.remove({ _id: id })
+  Product.deleteOne({ _id: id })
     .exec()
     .then(result => {
       res.status(200).json({

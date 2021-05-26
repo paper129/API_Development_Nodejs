@@ -101,7 +101,7 @@ exports.orders_delete_order = (req, res, next) => {
       res.status(200).json({
         message: "Order deleted",
         request: {
-          type: "POST",
+          type: "DELETE",
           url: "http://localhost:3000/orders",
           body: { productId: "ID", quantity: "Number" }
         }
@@ -112,4 +112,38 @@ exports.orders_delete_order = (req, res, next) => {
         error: err
       });
     });
+};
+
+exports.orders_update_order = (req, res, next) => {
+  const id = req.params.orderId;
+  const input = req.body;
+  console.log(input);
+  
+  for(const key of Object.keys(input)){
+    console.log(key, input[key])
+    Product.updateMany({ _id: id }, {key: input[key]}, {upsert: true}, function(err, affected){
+      if(err)
+      console.log(err)
+   else
+      console.log(affected)
+    })
+    .exec()
+    .then(result => {
+      //console.log(result);
+      res.status(200).json({
+        message: "Order updated",
+        request: {
+          type: "PUT",
+          url: "http://localhost:3000/orders/" + id
+        }
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({
+        error: err
+      });
+    });
+  }
+  
 };
